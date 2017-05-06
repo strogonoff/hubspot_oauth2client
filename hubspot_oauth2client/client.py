@@ -60,7 +60,7 @@ class OAuth2Flow:
 
         return self.create_credentials_from_code_exchange(resp)
 
-    def credentials_from_code_exchange(self, resp):
+    def create_credentials_from_code_exchange(self, resp):
         datadict = resp.json()
 
         if 'status' in datadict:
