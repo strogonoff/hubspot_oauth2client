@@ -37,7 +37,7 @@ setup(
     install_requires=install_requires,
     packages=find_packages(),
     license='BSD 2-clause',
-    keywords='hubspot oauth 2.0 http client',
+    keywords=['hubspot', 'oauth 2.0', 'http', 'client'],
     classifiers=[
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
