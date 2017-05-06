@@ -1,6 +1,10 @@
 Lightweight helper for authenticating with Hubspot’s OAuth2.
 Mimics a small part of Google’s oauth2client API for convenience.
 
+### Install
+
+    pip install hubspot_oauth2client
+
 ### Example usage
 
 Here’s how you might use it in a Django view:
