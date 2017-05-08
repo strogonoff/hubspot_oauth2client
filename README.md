@@ -1,17 +1,15 @@
 Lightweight helper for authenticating with Hubspot’s OAuth2.
 Mimics a small part of Google’s oauth2client API for convenience.
 
-Note: this library only handles the OAuth 2.0 flow,
-and it does not wrap the whole Hubspot API.
 
-Calling Hubspot APIs is fairly straightforward, however:
-simply add 
-
-### Install
+## Install
 
     pip install hubspot_oauth2client
 
-### Example usage with Django
+
+## Example usage with Django
+
+### Prerequisites
 
 Given your Django setup has an URL pattern
 named "home" with no parameters
@@ -36,8 +34,10 @@ and three following settings:
     credentials in request.session for later
     authenticated API calls on behalf of the user.
     """
-    
-Then a fairly complete implementation of a ``hubspot_oauth`` view
+ 
+### View
+
+A fairly complete implementation of a ``hubspot_oauth`` view
 could look like this:
 
     # -*- coding: utf-8 -*-
@@ -116,14 +116,14 @@ Given that you only need to define an URL pattern pointing to this view,
 and your app can direct users to it when necessary to initiate
 OAuth 2.0 flow.
 
-Per above code, access token is stored in ``request.session``
-in serialized form after user completes the authentication
-successfully.
+### Making authenticated calls
 
-After user completes the flow, you can use access credentials
-to make authenticated API calls. Here’s an example in which
-we obtain a list of all contacts available to the portal
-user has selected during authentication:
+Per our view implementation, access token is stored in ``request.session``
+in serialized form after user completes the authentication successfully.
+
+You can use those access credentials to make authenticated API calls later.
+Here’s an example in which we obtain a list of all contacts available
+to the portal user has selected during authentication:
 
     import urllib
     import requests
@@ -153,34 +153,35 @@ user has selected during authentication:
 
         return shortcuts.redirect('hubspot_oauth')
     
-Caveats:
+### Calling APIs without requiring user’s input
 
-* If you need to make authenticated Hubspot API calls
-  in absence of ``request.session`` (for example, from
-  an async task), you would want to alter the above code
-  to use another storage (like a Redis key) and tie
-  credentials to user identifier explicitly.
+If you need to make authenticated Hubspot API calls
+in absence of ``request.session`` (for example, from
+an async task), you would want to:
 
-### Roadmap
+* Alter the above code to use another storage
+  (like a Redis key) and tie credentials
+  to user identifier explicitly
 
-* Implement token refresh functionality.
+* Use credentials.refresh_token when possible
+  after access token expires (otherwise user
+  would have to authenticate with Hubspot
+  every few hours)
 
-  Currently you either have to implement that yourself
-  or re-run the flow, which means user might be asked
-  to authenticate and/or select their Hubspot portal
-  again and again.
-  
-* Add a full example of calling Hubspot APIs
-  using Python’s ``requests`` package.
 
-### Changelog
+## Roadmap
 
-#### 0.1
+* Implement token refresh functionality out of the box
+
+
+## Changelog
+
+### 0.1
 
 * Fixed a method reference in OAuth2Credentials class
 
 * Tested in production
 
-#### 0.1a0
+### 0.1a0
 
 * Initial implementation
