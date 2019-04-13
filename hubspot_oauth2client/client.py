@@ -115,7 +115,8 @@ class OAuth2Credentials:
 
     token_refresh_url = 'https://api.hubapi.com/oauth/v1/token'
 
-    def __init__(self, token_response,
+    def __init__(self, client_id, client_secret,
+                 token_response,
                  access_token, refresh_token,
                  token_expiry, scopes):
         self.client_id = client_id
