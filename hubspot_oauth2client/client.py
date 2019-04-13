@@ -8,6 +8,11 @@ import datetime
 import requests
 
 
+TOKEN_REQUEST_HEADERS = {
+    'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+}
+
+
 def flow_from_clientsecrets(secrets_filename, scopes, redirect_uri):
 
     with open(secrets_filename, 'r') as f:
@@ -26,10 +31,6 @@ class OAuth2Flow:
     authorize_url = 'https://app.hubspot.com/oauth/authorize'
 
     code_exchange_url = 'https://api.hubapi.com/oauth/v1/token'
-
-    code_exchange_req_headers = {
-        'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-    }
 
     def step1_get_authorize_url(self):
         params = {
@@ -55,7 +56,7 @@ class OAuth2Flow:
 
         resp = requests.post(
             self.code_exchange_url,
-            headers=self.code_exchange_req_headers,
+            headers=TOKEN_REQUEST_HEADERS,
             params=params)
 
         return self.create_credentials_from_code_exchange(resp)
@@ -107,6 +108,8 @@ class OAuth2Credentials:
 
     token_expiry_format = '%Y-%m-%dT%H:%M:%SZ'
 
+    token_refresh_url = 'https://api.hubapi.com/oauth/v1/token'
+
     def __init__(self, token_response,
                  access_token, refresh_token,
                  token_expiry, scopes):
@@ -135,6 +138,48 @@ class OAuth2Credentials:
         }
 
         return json.dumps(data)
+
+    def refresh(self):
+        params = {
+            'grant_type': 'refresh_token',
+            'refresh_token': self.refresh_token,
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+        }
+
+        resp = requests.post(
+            self.code_exchange_url,
+            headers=TOKEN_REQUEST_HEADERS,
+            params=params)
+
+        datadict = resp.json()
+
+        # TODO: This duplicates similar lines in the flow class
+        if 'status' in datadict:
+            # Hubspot OAuth2 returns JSON containing error code under "status"
+            # in case code exchange wasn’t successful.
+            raise CodeExchangeError(resp.text)
+
+        try:
+            token_lifetime_seconds = datetime.timedelta(
+                seconds=datadict['expires_in'])
+        except TypeError:
+            raise BadCodeExchangeResponse("Bad token expiration format")
+
+        token_obtained_on = datetime.datetime.utcnow()
+        token_expires_on = token_obtained_on + token_lifetime_seconds
+
+        try:
+            access_token = unicode(datadict['access_token'])
+            refresh_token = unicode(datadict['refresh_token'])
+        except KeyError:
+            raise BadCodeExchangeResponse("Missing access or refresh token")
+        except UnicodeDecodeError:
+            raise BadCodeExchangeResponse("Bad access or refresh token format")
+
+        self.access_token = access_token
+        self.refresh_token = refresh_token
+        self.token_expiry = token_expires_on
 
     @classmethod
     def from_json(cls, blob):
