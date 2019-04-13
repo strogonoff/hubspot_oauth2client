@@ -13,12 +13,15 @@ TOKEN_REQUEST_HEADERS = {
 }
 
 
-def flow_from_clientsecrets(secrets_filename, scopes, redirect_uri):
-
+def load_client_secrets(secrets_filename):
     with open(secrets_filename, 'r') as f:
         _blob = f.read()
 
-    client_secrets = json.loads(_blob)
+    return json.loads(_blob)
+
+
+def flow_from_clientsecrets(secrets_filename, scopes, redirect_uri):
+    client_secrets = load_client_secrets(secrets_filename)
 
     client_id = client_secrets['client_id']
     client_secret = client_secrets['client_secret']
@@ -87,6 +90,8 @@ class OAuth2Flow:
             raise BadCodeExchangeResponse("Bad access or refresh token format")
 
         return OAuth2Credentials(
+            client_id=self.client_id,
+            client_secret=self.client_secret,
             token_response=datadict,
             access_token=access_token,
             refresh_token=refresh_token,
@@ -113,6 +118,8 @@ class OAuth2Credentials:
     def __init__(self, token_response,
                  access_token, refresh_token,
                  token_expiry, scopes):
+        self.client_id = client_id
+        self.client_secret = client_secret
         self.token_response = token_response
         self.access_token = access_token
         self.refresh_token = refresh_token
@@ -129,6 +136,8 @@ class OAuth2Credentials:
         for later authenticated calls.
         """
         data = {
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
             'token_response': self.token_response,
             'access_token': self.access_token,
             'refresh_token': self.refresh_token,
@@ -148,7 +157,7 @@ class OAuth2Credentials:
         }
 
         resp = requests.post(
-            self.code_exchange_url,
+            self.token_refresh_url,
             headers=TOKEN_REQUEST_HEADERS,
             params=params)
 
@@ -189,6 +198,8 @@ class OAuth2Credentials:
         data = json.loads(blob)
 
         return cls(
+            data['client_id'],
+            data['client_secret'],
             data['token_response'],
             data['access_token'],
             data['refresh_token'],
