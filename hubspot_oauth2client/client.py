@@ -7,6 +7,11 @@ import datetime
 
 import requests
 
+try:
+    urlencode = urllib.urlencode
+except AttributeError:
+    urlencode = urllib.parse.urlencode
+
 
 TOKEN_REQUEST_HEADERS = {
     'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
@@ -44,7 +49,7 @@ class OAuth2Flow:
 
         url = '{base}?{params}'.format(
             base=self.authorize_url,
-            params=urllib.urlencode(params))
+            params=urlencode(params))
 
         return url
 
@@ -82,8 +87,8 @@ class OAuth2Flow:
         token_expires_on = token_obtained_on + token_lifetime_seconds
 
         try:
-            access_token = unicode(datadict['access_token'])
-            refresh_token = unicode(datadict['refresh_token'])
+            access_token = str(datadict['access_token'])
+            refresh_token = str(datadict['refresh_token'])
         except KeyError:
             raise BadCodeExchangeResponse("Missing access or refresh token")
         except UnicodeDecodeError:
@@ -180,8 +185,8 @@ class OAuth2Credentials:
         token_expires_on = token_obtained_on + token_lifetime_seconds
 
         try:
-            access_token = unicode(datadict['access_token'])
-            refresh_token = unicode(datadict['refresh_token'])
+            access_token = str(datadict['access_token'])
+            refresh_token = str(datadict['refresh_token'])
         except KeyError:
             raise BadCodeExchangeResponse("Missing access or refresh token")
         except UnicodeDecodeError:
